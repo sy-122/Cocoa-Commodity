@@ -95,6 +95,7 @@ combined_df.to_csv('cocoa_combined.csv', index=False)
 
 # Standardize the predictors
 X_standardized = (combined_df[['overall_tavg', 'US_Dollar_Index', 'Sugar_Price']] - combined_df[['overall_tavg', 'US_Dollar_Index', 'Sugar_Price']].mean()) / combined_df[['overall_tavg', 'US_Dollar_Index', 'Sugar_Price']].std()
+Y = combined_df['Close']
 
 # Add a constant term
 X_standardized = sm.add_constant(X_standardized)
