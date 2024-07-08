@@ -62,9 +62,21 @@ for region_name, region_point in cocoa_regions.items():
 
 fig,ax = plt.subplots(dpi=150, figsize=(15,5))
 
-#Plot weather data
+#Plot temperatue data
 for region_name, data in weather_data.items():
     rolling_mean = data['tavg'].rolling(window=7).mean()
+    ax.plot(data.index, rolling_mean, label=region_name)
+
+ax.legend(loc='upper left')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+#Plot for precipitation data
+fig,ax = plt.subplots(dpi=150, figsize=(15,5))
+
+for region_name, data in weather_data.items():
+    rolling_mean = data['prcp'].rolling(window=7).mean()
     ax.plot(data.index, rolling_mean, label=region_name)
 
 ax.legend(loc='upper left')
@@ -81,28 +93,38 @@ overall_avg_temp = all_temps.mean(axis=1)
 combined_df = pd.merge(overall_avg_temp.to_frame(name='overall_tavg'),
                        cocoa, left_index=True, right_index=True)
 
-# US Dollar Index Data
+#Combine Percipitation Data
+all_prcp = pd.concat([df['prcp'] for df in weather_data.values()], axis=1)
+overall_avg_p = all_prcp.mean(axis=1)
+combined_df = pd.merge(overall_avg_p.to_frame(name='overall_pavg'), combined_df, left_index=True, right_index=True)
+
+#US Dollar Index Data
 us_fx = yf.download('DX-Y.NYB', start=start_date, end=end_date)['Close']
 us_fx.name = 'US_Dollar_Index'
 combined_df = pd.merge(combined_df, us_fx, left_index=True, right_index=True)
 
-# Download Sugar Price Data
+#Download Sugar Price Data
 sugar = yf.download('SB=F', start=start_date, end=end_date)['Close']
 sugar.name = 'Sugar_Price'
 combined_df = pd.merge(combined_df, sugar, left_index=True, right_index=True)
 
-combined_df.to_csv('cocoa_combined.csv', index=False)
+#Drop na 
+combined_df = combined_df.dropna()
 
-# Standardize the predictors
+#Standardize the predictors
 X_standardized = (combined_df[['overall_tavg', 'US_Dollar_Index', 'Sugar_Price']] - combined_df[['overall_tavg', 'US_Dollar_Index', 'Sugar_Price']].mean()) / combined_df[['overall_tavg', 'US_Dollar_Index', 'Sugar_Price']].std()
 Y = combined_df['Close']
 
-# Add a constant term
+#Add a constant term
 X_standardized = sm.add_constant(X_standardized)
 
-# Fit the regression model using standardized predictors
+#Fit the regression model using standardized predictors
 model = sm.OLS(Y, X_standardized).fit()
 
-# Print the summary of the standardized model
+#Print the summary of the standardized model
 print(model.summary())
 
+#Drop 'overall_pavg' column
+combined_df = combined_df.drop(columns=['overall_pavg'])
+
+combined_df.to_csv('cocoa_combined.csv', index=False)
