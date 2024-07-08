@@ -1,3 +1,5 @@
+## Cocoa Commodity Price
+
 This project conducts an analysis of various factors influencing cocoa commodity prices. By examining a curated dataset, we aim to identify the key variables that have a significant impact on price fluctuations.
 
 The study focuses on the following variables:
